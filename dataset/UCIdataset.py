@@ -58,7 +58,8 @@ class UCIDataset(object):
             feature_split = 6
 
         datalen = data.shape[0]
-        return data[ :int(datalen * ratio), :feature_split], data[ :int(datalen * ratio), feature_split:], data[int(datalen * ratio): , :feature_split], data[int(datalen * ratio): , feature_split:]
+        data_per = np.random.permutation(data)
+        return data_per[ :int(datalen * ratio), :feature_split], data_per[ :int(datalen * ratio), feature_split:], data_per[int(datalen * ratio): , :feature_split], data_per[int(datalen * ratio): , feature_split:]
 
 if __name__ == '__main__':
     for ds in dataset_name_list:
