@@ -16,4 +16,6 @@ class FaceDataset(object):
             Y = np.array(pickle.load(f))
             
         datalen = X.shape[0]
-        return X[: int(datalen * ratio)], Y[: int(datalen * ratio)], X[int(datalen * ratio): ], Y[int(datalen * ratio): ]
+        X_per = np.random.permutation(X)
+        Y_per = np.random.permutation(Y)
+        return X_per[: int(datalen * ratio)], Y_per[: int(datalen * ratio)], X_per[int(datalen * ratio): ], Y_per[int(datalen * ratio): ]
