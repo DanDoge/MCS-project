@@ -62,16 +62,62 @@ class MLP_drop(nn.Module):
 
 def train_nn(model, data, num_epoch=5000):
     train_dataset = TensorDataset(torch.Tensor(data.Xtrain), torch.Tensor(data.Ytrain))
-    train_dataloader = DataLoader(dataset=train_dataset, batch_size=128, shuffle=True)
+    train_dataloader = DataLoader(dataset=train_dataset, batch_size=1024, shuffle=True)
 
     test_dataset = TensorDataset(torch.Tensor(data.Xtest), torch.Tensor(data.Ytest))
+    test_dataloader = DataLoader(dataset=test_dataset, batch_size=1024)
+
+    criterion = torch.nn.MSELoss()
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.02)
+
+    test_losses = []
+    train_losses = []
+    for epoch in range(num_epoch):
+        for inputs, targets in train_dataloader:
+            optimizer.zero_grad()
+            inputs = inputs.reshape([-1, 1, 100, 100])
+            outputs = model(inputs)
+            loss = criterion(outputs, targets)
+            
+            loss.backward()
+            optimizer.step()
+        model.eval()
+        te_loss = 0.
+        for inputs, targets in test_dataloader:
+            inputs = inputs.reshape([-1, 1, 100, 100])
+            outputs = model(inputs)
+            te_loss += torch.nn.L1Loss(reduction="mean")(outputs * 180 + 180, targets * 180 + 180).data
+        te_loss = te_loss.item() / len(test_dataloader)
+        test_losses.append(te_loss)
+        tr_loss = 0.
+        for inputs, targets in train_dataloader:
+            inputs = inputs.reshape([-1, 1, 100, 100])
+            outputs = model(inputs)
+            tr_loss += torch.nn.L1Loss(reduction="mean")(outputs * 180 + 180, targets * 180 + 180).data
+        tr_loss = tr_loss.item() / len(train_dataloader)
+        train_losses.append(tr_loss)
+        print(tr_loss, te_loss)
+        model.train()
+
+    return train_losses, test_losses
+
+def train_nn_memory(model, data1, data2, num_epoch=5000):
+    train_dataset = TensorDataset(torch.Tensor(data1.Xtrain), torch.Tensor(data1.Ytrain))
+    train_dataloader = DataLoader(dataset=train_dataset, batch_size=128, shuffle=True)
+
+    test_dataset = TensorDataset(torch.Tensor(data1.Xtest), torch.Tensor(data1.Ytest))
     test_dataloader = DataLoader(dataset=test_dataset, batch_size=128)
 
     criterion = torch.nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.002)
 
-    losses = []
+    test_losses = []
+    train_losses = []
     for epoch in range(num_epoch):
+        if epoch == num_epoch / 2:
+            print("switch dataset...")
+            train_dataset = TensorDataset(torch.Tensor(data2.Xtrain), torch.Tensor(data2.Ytrain))
+            train_dataloader = DataLoader(dataset=train_dataset, batch_size=128, shuffle=True)
         for inputs, targets in train_dataloader:
             optimizer.zero_grad()
             outputs = model(inputs)
@@ -79,11 +125,19 @@ def train_nn(model, data, num_epoch=5000):
             loss.backward()
             optimizer.step()
         model.eval()
-        loss = 0.
+        te_loss = 0.
         for inputs, targets in test_dataloader:
             outputs = model(inputs)
-            loss += criterion(outputs, targets).data
-        losses.append(loss.data // len(test_dataloader))
+            te_loss += torch.nn.MSELoss(reduction="sum")(outputs, targets).data
+        te_loss = te_loss.data / len(test_dataloader)
+        test_losses.append(te_loss)
+        tr_loss = 0.
+        for inputs, targets in train_dataloader:
+            outputs = model(inputs)
+            tr_loss += torch.nn.MSELoss(reduction="sum")(outputs, targets).data
+        tr_loss = tr_loss.data / len(train_dataloader)
+        train_losses.append(tr_loss)
+        print(tr_loss, te_loss)
         model.train()
 
-    return losses
+    return train_losses, test_losses
