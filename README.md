@@ -3,6 +3,8 @@
 This repo holds the final project for course [*Modern Computational Statistics*](https://zcrabbit.github.io/courses/mcs-f19.html).
 - for datasets in ./dataset, please refer to UCI pages for oringinal license
 
+Run `ToyData.ipynb`, `DVI.ipynb`, `ADVI.ipynb`
+    
 ## Deterministic Variational Inference
 
 This code accompanies the publication [**Fixing Variational Bayes: Deterministic Variational Inference for Bayesian Neural Networks**](https://arxiv.org/abs/1810.03958)
